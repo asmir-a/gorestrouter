@@ -31,7 +31,7 @@ type UrlsTree struct {
 }
 
 func NewUrlsTree(urls []Url) *UrlsTree {
-	sentinel := &ResourceSentinel{name: "sentinel", setUpHandler: nil}
+	sentinel := &ResourceSentinel{name: "sentinel", handlerBuilder: nil}
 	nodeSentinel := ResourceNode{
 		resource:            sentinel,
 		collectionsChildren: map[string]*ResourceNode{},

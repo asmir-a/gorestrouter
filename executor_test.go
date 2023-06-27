@@ -17,7 +17,7 @@ func TestExecutorGeneral(t *testing.T) {
 	urlOne := Url{
 		&ResourceIdentifier{name: "username"},
 		&ResourceCollection{name: "wordgame"},
-		&ResourceCollection{name: "stats", setUpHandler: statsHandlerBuilder},
+		&ResourceCollection{name: "stats", handlerBuilder: statsHandlerBuilder},
 	}
 	wordsHandlerBuilder := func(params map[string]string) http.Handler {
 		username := params["username"]
@@ -29,7 +29,7 @@ func TestExecutorGeneral(t *testing.T) {
 	urlTwo := Url{
 		&ResourceIdentifier{name: "username"},
 		&ResourceCollection{name: "wordgame"},
-		&ResourceCollection{name: "words", setUpHandler: wordsHandlerBuilder},
+		&ResourceCollection{name: "words", handlerBuilder: wordsHandlerBuilder},
 	}
 	urls := []Url{urlOne, urlTwo}
 	urlsTree := NewUrlsTree(urls)

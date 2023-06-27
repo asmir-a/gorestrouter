@@ -3,8 +3,8 @@ package main
 import "net/http"
 
 type ResourceSentinel struct {
-	name         string
-	setUpHandler func(map[string]string) http.Handler
+	name           string
+	handlerBuilder func(map[string]string) http.Handler
 }
 
 func (pe *ResourceSentinel) Name() string {
@@ -12,5 +12,5 @@ func (pe *ResourceSentinel) Name() string {
 }
 
 func (pe *ResourceSentinel) HandlerBuilder() func(map[string]string) http.Handler {
-	return pe.setUpHandler
+	return pe.handlerBuilder
 }

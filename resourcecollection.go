@@ -3,8 +3,8 @@ package main
 import "net/http"
 
 type ResourceCollection struct {
-	name         string
-	setUpHandler func(map[string]string) http.Handler
+	name           string
+	handlerBuilder func(map[string]string) http.Handler
 }
 
 func (pe *ResourceCollection) Name() string {
@@ -12,5 +12,5 @@ func (pe *ResourceCollection) Name() string {
 }
 
 func (pe *ResourceCollection) HandlerBuilder() func(map[string]string) http.Handler {
-	return pe.setUpHandler
+	return pe.handlerBuilder
 }
