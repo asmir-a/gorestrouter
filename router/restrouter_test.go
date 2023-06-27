@@ -1,4 +1,4 @@
-package restrouter
+package router
 
 import (
 	"io"
