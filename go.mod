@@ -1,3 +1,3 @@
-module github.com/asmir-a/gorouter
+module github.com/asmir-a/gorestrouter
 
 go 1.19

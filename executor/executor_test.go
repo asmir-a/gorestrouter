@@ -1,9 +1,12 @@
-package main
+package executor
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/asmir-a/gorestrouter/resource"
+	"github.com/asmir-a/gorestrouter/tree"
 )
 
 func TestExecutorGeneral(t *testing.T) {
@@ -14,10 +17,10 @@ func TestExecutorGeneral(t *testing.T) {
 		}
 		return http.HandlerFunc(statsHandler)
 	}
-	urlOne := Url{
-		&ResourceIdentifier{name: "username"},
-		&ResourceCollection{name: "wordgame"},
-		&ResourceCollection{name: "stats", handlerBuilder: statsHandlerBuilder},
+	urlOne := resource.Url{
+		resource.NewResourceIdentifier("username", nil),
+		resource.NewResourceCollection("wordgame", nil),
+		resource.NewResourceCollection("stats", statsHandlerBuilder),
 	}
 	wordsHandlerBuilder := func(params map[string]string) http.Handler {
 		username := params["username"]
@@ -26,13 +29,13 @@ func TestExecutorGeneral(t *testing.T) {
 		}
 		return http.HandlerFunc(wordsHandler)
 	}
-	urlTwo := Url{
-		&ResourceIdentifier{name: "username"},
-		&ResourceCollection{name: "wordgame"},
-		&ResourceCollection{name: "words", handlerBuilder: wordsHandlerBuilder},
+	urlTwo := resource.Url{
+		resource.NewResourceIdentifier("username", nil),
+		resource.NewResourceCollection("wordgame", nil),
+		resource.NewResourceCollection("words", wordsHandlerBuilder),
 	}
-	urls := []Url{urlOne, urlTwo}
-	urlsTree := NewUrlsTree(urls)
+	urls := []resource.Url{urlOne, urlTwo}
+	urlsTree := tree.NewUrlsTree(urls)
 	executor := NewExecutor(urlsTree)
 
 	newRequestOne := httptest.NewRequest("GET", "/asmir/wordgame/stats", nil)

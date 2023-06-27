@@ -1,57 +1,41 @@
-package main
+package tree
 
 import (
 	"fmt"
 	"log"
+
+	"github.com/asmir-a/gorestrouter/resource"
 )
 
-type ResourceNode struct {
-	resource            Resource
-	collectionsChildren map[string]*ResourceNode //two fields responsible for children might reside in another struct; but for now it is okay and it might even be okay for the future
-	identifierChild     *ResourceNode
-}
-
-func (node *ResourceNode) FindChildWithResourceName(nameOrId string, params map[string]string) *ResourceNode {
-	if collectionChild, ok := node.collectionsChildren[nameOrId]; ok {
-		return collectionChild
-	}
-	if node.identifierChild != nil {
-		params[node.identifierChild.Name()] = nameOrId
-		return node.identifierChild
-	}
-	return nil
-}
-
-func (node *ResourceNode) Name() string {
-	return node.resource.Name()
-}
-
 type UrlsTree struct {
-	root *ResourceNode
+	Root *ResourceNode
 }
 
-func NewUrlsTree(urls []Url) *UrlsTree {
-	sentinel := &ResourceSentinel{name: "sentinel", handlerBuilder: nil}
+func NewUrlsTree(urls []resource.Url) *UrlsTree {
+	sentinel := resource.NewResourceSentinel()
 	nodeSentinel := ResourceNode{
-		resource:            sentinel,
+		Resource:            sentinel,
 		collectionsChildren: map[string]*ResourceNode{},
 		identifierChild:     nil,
 	}
-	urlsTree := &UrlsTree{root: &nodeSentinel}
+	urlsTree := &UrlsTree{Root: &nodeSentinel}
 	urlsTree.InsertUrls(urls)
 	return urlsTree
 }
 
 // todo: maybe should use a shorter name
-func (tree *UrlsTree) InsertIdentifierResourceNodeInto(currentNode *ResourceNode, currentResource Resource) *ResourceNode {
-	if currentNode.identifierChild != nil && currentNode.identifierChild.Name() != currentResource.Name() {
+func (tree *UrlsTree) InsertIdentifierResourceNodeInto(
+	currentNode *ResourceNode,
+	currentResource resource.Resource,
+) *ResourceNode {
+	if currentNode.identifierChild != nil && currentNode.identifierChild.Resource.Name() != currentResource.Name() {
 		log.Fatal("resource identifier is already present")
 	} else if currentNode.identifierChild != nil {
 		return currentNode.identifierChild
 	}
 
 	node := &ResourceNode{
-		resource:            currentResource, //todo: think about the possibility that the slice is gonna change
+		Resource:            currentResource, //todo: think about the possibility that the slice is gonna change
 		collectionsChildren: map[string]*ResourceNode{},
 		identifierChild:     nil,
 	}
@@ -59,13 +43,16 @@ func (tree *UrlsTree) InsertIdentifierResourceNodeInto(currentNode *ResourceNode
 	return node
 }
 
-func (tree *UrlsTree) InsertCollectionResourceNodeInto(currentNode *ResourceNode, currentResource Resource) *ResourceNode {
+func (tree *UrlsTree) InsertCollectionResourceNodeInto(
+	currentNode *ResourceNode,
+	currentResource resource.Resource,
+) *ResourceNode {
 	if node, ok := currentNode.collectionsChildren[currentResource.Name()]; ok {
 		return node
 	}
 
 	newResourceNode := &ResourceNode{
-		resource:            currentResource,
+		Resource:            currentResource,
 		collectionsChildren: map[string]*ResourceNode{},
 		identifierChild:     nil,
 	}
@@ -73,17 +60,17 @@ func (tree *UrlsTree) InsertCollectionResourceNodeInto(currentNode *ResourceNode
 	return newResourceNode
 }
 
-func (tree *UrlsTree) insertUrlHelper(currentNode *ResourceNode, currentUrl Url) {
+func (tree *UrlsTree) insertUrlHelper(currentNode *ResourceNode, currentUrl resource.Url) {
 	if len(currentUrl) == 0 {
 		return
 	}
 
 	currentResource := currentUrl[0]
 	switch currentResource.(type) {
-	case *ResourceCollection:
+	case *resource.ResourceCollection:
 		nextResourceNode := tree.InsertCollectionResourceNodeInto(currentNode, currentResource)
 		tree.insertUrlHelper(nextResourceNode, currentUrl[1:])
-	case *ResourceIdentifier:
+	case *resource.ResourceIdentifier:
 		nextResourceNode := tree.InsertIdentifierResourceNodeInto(currentNode, currentResource)
 		tree.insertUrlHelper(nextResourceNode, currentUrl[1:])
 	default:
@@ -91,18 +78,18 @@ func (tree *UrlsTree) insertUrlHelper(currentNode *ResourceNode, currentUrl Url)
 	}
 }
 
-func (tree *UrlsTree) InsertUrl(url Url) {
-	tree.insertUrlHelper(tree.root, url)
+func (tree *UrlsTree) InsertUrl(url resource.Url) {
+	tree.insertUrlHelper(tree.Root, url)
 }
 
-func (tree *UrlsTree) InsertUrls(url []Url) {
+func (tree *UrlsTree) InsertUrls(url []resource.Url) {
 	for _, resourcesInFullUrl := range url {
 		tree.InsertUrl(resourcesInFullUrl)
 	}
 }
 
 func (tree *UrlsTree) printTreeHelper(currentNode *ResourceNode) {
-	fmt.Println("node: ", currentNode.Name())
+	fmt.Println("node: ", currentNode.Resource.Name())
 	collectionsChildren := currentNode.collectionsChildren
 	for _, collectionsChild := range collectionsChildren {
 		tree.printTreeHelper(collectionsChild)
@@ -113,7 +100,7 @@ func (tree *UrlsTree) printTreeHelper(currentNode *ResourceNode) {
 }
 
 func (tree *UrlsTree) printTree() {
-	tree.printTreeHelper(tree.root)
+	tree.printTreeHelper(tree.Root)
 }
 
 func (tree *UrlsTree) stringHelper(currentNode *ResourceNode) [][]string {
@@ -129,20 +116,20 @@ func (tree *UrlsTree) stringHelper(currentNode *ResourceNode) [][]string {
 
 	for _, singleChildUrls := range allChildrenUrls {
 		for _, singleChildUrl := range singleChildUrls {
-			switch currentNode.resource.(type) {
-			case *ResourceSentinel: //maybe can avoid this check by storing "" as sentinel node's name
+			switch currentNode.Resource.(type) {
+			case *resource.ResourceSentinel: //maybe can avoid this check by storing "" as sentinel node's name
 			default:
-				singleChildUrl = append([]string{currentNode.Name()}, singleChildUrl...) //need to rethink how to make this more performant
+				singleChildUrl = append([]string{currentNode.Resource.Name()}, singleChildUrl...) //need to rethink how to make this more performant
 			}
 			allUrls = append(allUrls, singleChildUrl)
 		}
 	}
 
 	if len(allChildrenUrls) == 0 {
-		switch currentNode.resource.(type) {
-		case *ResourceSentinel:
+		switch currentNode.Resource.(type) {
+		case *resource.ResourceSentinel:
 		default:
-			allUrls = append(allUrls, []string{currentNode.Name()})
+			allUrls = append(allUrls, []string{currentNode.Resource.Name()})
 		}
 	}
 
@@ -151,7 +138,7 @@ func (tree *UrlsTree) stringHelper(currentNode *ResourceNode) [][]string {
 
 func (tree *UrlsTree) String() string {
 	allUrlsString := ""
-	allUrls := tree.stringHelper(tree.root)
+	allUrls := tree.stringHelper(tree.Root)
 	for _, singleUrl := range allUrls {
 		singleUrlString := ""
 		for _, resourceNodeName := range singleUrl {

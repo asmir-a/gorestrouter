@@ -1,12 +1,14 @@
-package main
+package tree
 
 import (
 	"regexp"
 	"testing"
+
+	"github.com/asmir-a/gorestrouter/resource"
 )
 
 func TestInsertZeroUrls(t *testing.T) {
-	urls := []Url{}
+	urls := []resource.Url{}
 	urlsTree := NewUrlsTree(urls) //urls should be passed to init the tree
 
 	treeRepresentation := urlsTree.String()
@@ -16,8 +18,8 @@ func TestInsertZeroUrls(t *testing.T) {
 }
 
 func TestInsertOneUrlWithOneResource(t *testing.T) {
-	url := Url{&ResourceIdentifier{name: "username"}}
-	urls := []Url{url}
+	url := resource.Url{resource.NewResourceIdentifier("username", nil)}
+	urls := []resource.Url{url}
 
 	urlsTree := NewUrlsTree(urls)
 
@@ -30,12 +32,12 @@ func TestInsertOneUrlWithOneResource(t *testing.T) {
 }
 
 func TestInsertOneUrlWithTwoResources(t *testing.T) {
-	url := Url{
-		&ResourceIdentifier{name: "username"},
-		&ResourceCollection{name: "wordgame"},
-		&ResourceCollection{name: "stats"},
+	url := resource.Url{
+		resource.NewResourceIdentifier("username", nil),
+		resource.NewResourceCollection("wordgame", nil),
+		resource.NewResourceCollection("stats", nil),
 	}
-	urls := []Url{url}
+	urls := []resource.Url{url}
 
 	urlsTree := NewUrlsTree(urls)
 
@@ -47,17 +49,17 @@ func TestInsertOneUrlWithTwoResources(t *testing.T) {
 }
 
 func TestInsertTwoUrlsWithTwoResources(t *testing.T) {
-	urlOne := Url{
-		&ResourceIdentifier{name: "username"},
-		&ResourceCollection{name: "wordgame"},
-		&ResourceCollection{name: "stats"},
+	urlOne := resource.Url{
+		resource.NewResourceIdentifier("username", nil),
+		resource.NewResourceCollection("wordgame", nil),
+		resource.NewResourceCollection("stats", nil),
 	}
-	urlTwo := Url{
-		&ResourceIdentifier{name: "username"},
-		&ResourceCollection{name: "wordgame"},
-		&ResourceCollection{name: "words"},
+	urlTwo := resource.Url{
+		resource.NewResourceIdentifier("username", nil),
+		resource.NewResourceCollection("wordgame", nil),
+		resource.NewResourceCollection("words", nil),
 	}
-	urls := []Url{urlOne, urlTwo}
+	urls := []resource.Url{urlOne, urlTwo}
 	urlsTree := NewUrlsTree(urls)
 
 	treeRepresentation := urlsTree.String()
@@ -69,17 +71,17 @@ func TestInsertTwoUrlsWithTwoResources(t *testing.T) {
 }
 
 func TestInsertTwoUrlsWithTwoResourcesWithDifferingHeads(t *testing.T) {
-	urlOne := Url{
-		&ResourceIdentifier{name: "username"},
-		&ResourceCollection{name: "books"},
-		&ResourceIdentifier{name: "book_id"},
+	urlOne := resource.Url{
+		resource.NewResourceIdentifier("username", nil),
+		resource.NewResourceCollection("books", nil),
+		resource.NewResourceCollection("book_id", nil),
 	}
-	urlTwo := Url{
-		&ResourceCollection{name: "books"},
-		&ResourceIdentifier{name: "book_id"},
+	urlTwo := resource.Url{
+		resource.NewResourceCollection("books", nil),
+		resource.NewResourceIdentifier("book_id", nil),
 	}
 
-	urls := []Url{urlOne, urlTwo}
+	urls := []resource.Url{urlOne, urlTwo}
 	urlsTree := NewUrlsTree(urls)
 
 	treeRepresentation := urlsTree.String()

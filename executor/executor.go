@@ -1,14 +1,17 @@
-package main
+package executor
 
 import (
 	"log"
 	"net/http"
 	"path"
 	"strings"
+
+	"github.com/asmir-a/gorestrouter/resource"
+	"github.com/asmir-a/gorestrouter/tree"
 )
 
 type Executor struct {
-	tree *UrlsTree
+	tree *tree.UrlsTree
 }
 
 func getHeadAndTail(urlPath string) (string, string) {
@@ -26,14 +29,14 @@ func getHeadAndTail(urlPath string) (string, string) {
 func (e *Executor) FindHandlerAndHandleHelper(
 	w http.ResponseWriter,
 	req *http.Request,
-	currentNode *ResourceNode,
+	currentNode *tree.ResourceNode,
 	currentReqUrl string,
 	params map[string]string,
 ) { //this is the logic for execute; insertHelper should accept type urlPath
 	head, tail := getHeadAndTail(currentReqUrl)
 	if head == "" {
 		//handle the request using the handler inside of the current node
-		handlerBuilder := currentNode.resource.HandlerBuilder()
+		handlerBuilder := currentNode.Resource.HandlerBuilder()
 		if handlerBuilder == nil {
 			http.Error(w, "resource not found", http.StatusNotFound)
 		}
@@ -42,9 +45,9 @@ func (e *Executor) FindHandlerAndHandleHelper(
 		return
 	}
 
-	currentResource := currentNode.resource
+	currentResource := currentNode.Resource
 	switch currentResource.(type) {
-	case *ResourceIdentifier:
+	case *resource.ResourceIdentifier:
 		//save the entry in the params somehow; prolly using the name of the path entry for now
 		nextNode := currentNode.FindChildWithResourceName(head, params)
 		if nextNode == nil {
@@ -52,7 +55,7 @@ func (e *Executor) FindHandlerAndHandleHelper(
 			return
 		}
 		e.FindHandlerAndHandleHelper(w, req, nextNode, tail, params)
-	case *ResourceCollection:
+	case *resource.ResourceCollection:
 		//start move on
 		nextNode := currentNode.FindChildWithResourceName(head, params)
 		if nextNode == nil {
@@ -60,7 +63,7 @@ func (e *Executor) FindHandlerAndHandleHelper(
 			return
 		}
 		e.FindHandlerAndHandleHelper(w, req, nextNode, tail, params)
-	case *ResourceSentinel:
+	case *resource.ResourceSentinel:
 		nextNode := currentNode.FindChildWithResourceName(head, params)
 		if nextNode == nil {
 			http.Error(w, "request resource is not found", http.StatusNotFound)
@@ -72,14 +75,14 @@ func (e *Executor) FindHandlerAndHandleHelper(
 	}
 }
 
-func NewExecutor(tree *UrlsTree) *Executor {
+func NewExecutor(tree *tree.UrlsTree) *Executor {
 	newExecutor := &Executor{}
 	newExecutor.tree = tree
 	return newExecutor
 }
 
 func (e *Executor) FindHandlerAndHandle(w http.ResponseWriter, req *http.Request, pathInRequest string) {
-	sentinelNode := e.tree.root
+	sentinelNode := e.tree.Root
 	e.FindHandlerAndHandleHelper(w, req, sentinelNode, pathInRequest, map[string]string{})
 }
 
