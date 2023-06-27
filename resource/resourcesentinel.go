@@ -2,7 +2,7 @@ package resource
 
 import "net/http"
 
-type ResourceSentinel struct {
+type ResourceSentinel struct { //we can remove this struct, because sentinel actually acts like collection resource
 	name           string
 	handlerBuilder func(map[string]string) http.Handler
 }
