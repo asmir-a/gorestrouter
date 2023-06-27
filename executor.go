@@ -23,37 +23,67 @@ func getHeadAndTail(urlPath string) (string, string) {
 	return urlPath[1:slashIndex], urlPath[slashIndex:]
 }
 
-func FindHandlerAndHandleHelper(currentNode *ResourceNode, currentReqPath string, params map[string]string) { //this is the logic for execute; insertHelper should accept type urlPath
-	head, _ := getHeadAndTail(currentReqPath)
+func (e *Executor) FindHandlerAndHandleHelper(
+	w http.ResponseWriter,
+	req *http.Request,
+	currentNode *ResourceNode,
+	currentReqUrl string,
+	params map[string]string,
+) { //this is the logic for execute; insertHelper should accept type urlPath
+	head, tail := getHeadAndTail(currentReqUrl)
 	if head == "" {
 		//handle the request using the handler inside of the current node
 		handlerBuilder := currentNode.resource.HandlerBuilder()
-		handlerBuilder(params)
+		if handlerBuilder == nil {
+			http.Error(w, "resource not found", http.StatusNotFound)
+		}
+		handler := handlerBuilder(params)
+		handler.ServeHTTP(w, req)
+		return
 	}
 
-	currentPathEntry := currentNode.resource
-	switch currentPathEntry.(type) {
+	currentResource := currentNode.resource
+	switch currentResource.(type) {
 	case *ResourceIdentifier:
 		//save the entry in the params somehow; prolly using the name of the path entry for now
+		nextNode := currentNode.FindChildWithResourceName(head, params)
+		if nextNode == nil {
+			http.Error(w, "requested resource is not found", http.StatusNotFound)
+			return
+		}
+		e.FindHandlerAndHandleHelper(w, req, nextNode, tail, params)
 	case *ResourceCollection:
 		//start move on
+		nextNode := currentNode.FindChildWithResourceName(head, params)
+		if nextNode == nil {
+			http.Error(w, "requested resource is not found", http.StatusNotFound)
+			return
+		}
+		e.FindHandlerAndHandleHelper(w, req, nextNode, tail, params)
 	case *ResourceSentinel:
-		//maybe not needed at all
+		nextNode := currentNode.FindChildWithResourceName(head, params)
+		if nextNode == nil {
+			http.Error(w, "request resource is not found", http.StatusNotFound)
+			return
+		}
+		e.FindHandlerAndHandleHelper(w, req, nextNode, tail, params)
 	default:
 		log.Fatal("not possible")
 	}
 }
 
-func (e *Executor) NewExecutor(tree *UrlsTree) {
-	e.tree = tree
+func NewExecutor(tree *UrlsTree) *Executor {
+	newExecutor := &Executor{}
+	newExecutor.tree = tree
+	return newExecutor
 }
 
-func (e *Executor) FindHandlerAndHandle(pathInRequest string, w http.ResponseWriter) {
+func (e *Executor) FindHandlerAndHandle(w http.ResponseWriter, req *http.Request, pathInRequest string) {
 	sentinelNode := e.tree.root
-	FindHandlerAndHandleHelper(sentinelNode, pathInRequest, map[string]string{})
+	e.FindHandlerAndHandleHelper(w, req, sentinelNode, pathInRequest, map[string]string{})
 }
 
 func (e *Executor) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	requestUrlPath := req.URL.Path
-	e.FindHandlerAndHandle(requestUrlPath, w)
+	e.FindHandlerAndHandle(w, req, requestUrlPath)
 }

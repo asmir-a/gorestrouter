@@ -7,8 +7,7 @@ import (
 
 func TestInsertZeroUrls(t *testing.T) {
 	urls := []Url{}
-	urlsTree := NewUrlsTree() //urls should be passed to init the tree
-	urlsTree.InsertUrls(urls)
+	urlsTree := NewUrlsTree(urls) //urls should be passed to init the tree
 
 	treeRepresentation := urlsTree.String()
 	if treeRepresentation != "" {
@@ -20,8 +19,7 @@ func TestInsertOneUrlWithOneResource(t *testing.T) {
 	url := Url{&ResourceIdentifier{name: "username"}}
 	urls := []Url{url}
 
-	urlsTree := NewUrlsTree()
-	urlsTree.InsertUrls(urls)
+	urlsTree := NewUrlsTree(urls)
 
 	treeRepresentation := urlsTree.String()
 	want := regexp.MustCompile(`username`)
@@ -39,8 +37,7 @@ func TestInsertOneUrlWithTwoResources(t *testing.T) {
 	}
 	urls := []Url{url}
 
-	urlsTree := NewUrlsTree()
-	urlsTree.InsertUrls(urls)
+	urlsTree := NewUrlsTree(urls)
 
 	treeRepresentation := urlsTree.String()
 	want := regexp.MustCompile(`username.*wordgame.*stats`)
@@ -61,9 +58,7 @@ func TestInsertTwoUrlsWithTwoResources(t *testing.T) {
 		&ResourceCollection{name: "words"},
 	}
 	urls := []Url{urlOne, urlTwo}
-
-	urlsTree := NewUrlsTree()
-	urlsTree.InsertUrls(urls)
+	urlsTree := NewUrlsTree(urls)
 
 	treeRepresentation := urlsTree.String()
 	wantOne := regexp.MustCompile("username.*wordgame.*stats")
@@ -85,8 +80,7 @@ func TestInsertTwoUrlsWithTwoResourcesWithDifferingHeads(t *testing.T) {
 	}
 
 	urls := []Url{urlOne, urlTwo}
-	urlsTree := NewUrlsTree()
-	urlsTree.InsertUrls(urls)
+	urlsTree := NewUrlsTree(urls)
 
 	treeRepresentation := urlsTree.String()
 	wantOne := regexp.MustCompile("username.*books.*book_id")

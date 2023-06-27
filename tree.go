@@ -11,6 +11,17 @@ type ResourceNode struct {
 	identifierChild     *ResourceNode
 }
 
+func (node *ResourceNode) FindChildWithResourceName(nameOrId string, params map[string]string) *ResourceNode {
+	if collectionChild, ok := node.collectionsChildren[nameOrId]; ok {
+		return collectionChild
+	}
+	if node.identifierChild != nil {
+		params[node.identifierChild.Name()] = nameOrId
+		return node.identifierChild
+	}
+	return nil
+}
+
 func (node *ResourceNode) Name() string {
 	return node.resource.Name()
 }
@@ -19,14 +30,16 @@ type UrlsTree struct {
 	root *ResourceNode
 }
 
-func NewUrlsTree() *UrlsTree {
+func NewUrlsTree(urls []Url) *UrlsTree {
 	sentinel := &ResourceSentinel{name: "sentinel", setUpHandler: nil}
 	nodeSentinel := ResourceNode{
 		resource:            sentinel,
 		collectionsChildren: map[string]*ResourceNode{},
 		identifierChild:     nil,
 	}
-	return &UrlsTree{root: &nodeSentinel}
+	urlsTree := &UrlsTree{root: &nodeSentinel}
+	urlsTree.InsertUrls(urls)
+	return urlsTree
 }
 
 // todo: maybe should use a shorter name
