@@ -141,5 +141,26 @@ func TestMultipleParamsAndJson(t *testing.T) {
 	} else if productData.Product != 12*34 {
 		t.Fatalf("expected the product to be %q but it is %q", 12*34, productData.Product)
 	}
+}
 
+func TestNotFound(t *testing.T) {
+	router := Router{}
+	endpointWords := "/[username]/wordgame/words"
+	handlerBuilderWords := func(params map[string]string) http.Handler {
+		username := params["username"]
+		handler := func(w http.ResponseWriter, req *http.Request) {
+			w.Write([]byte(username))
+		}
+		return http.HandlerFunc(handler)
+	}
+	router.Handle(endpointWords, handlerBuilderWords)
+
+	requestToWords := httptest.NewRequest("GET", "/asmir/sentencegame/words", nil)
+	responseFromWords := httptest.NewRecorder()
+
+	router.ServeHTTP(responseFromWords, requestToWords)
+
+	if responseFromWords.Result().StatusCode != http.StatusNotFound {
+		t.Fatal("expected a response with not found status")
+	}
 }
