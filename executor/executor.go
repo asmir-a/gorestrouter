@@ -39,6 +39,7 @@ func (e *Executor) FindHandlerAndHandleHelper(
 		handlerBuilder := currentNode.Resource.HandlerBuilder()
 		if handlerBuilder == nil {
 			http.Error(w, "resource not found", http.StatusNotFound)
+			return
 		}
 		handler := handlerBuilder(params)
 		handler.ServeHTTP(w, req)
