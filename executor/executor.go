@@ -15,6 +15,9 @@ type Executor struct {
 }
 
 func getHeadAndTail(urlPath string) (string, string) {
+	if urlPath == "/" || urlPath == "" {
+		return "", ""
+	}
 	urlPath = path.Clean("/"+urlPath) + "/"
 	if urlPath == "/" { //this assumes that the url is kind of properly formatted; todo: think of what attackers migth try to do
 		return "", ""

@@ -9,6 +9,29 @@ import (
 	"github.com/asmir-a/gorestrouter/tree"
 )
 
+func TestGetHeadAndTail(t *testing.T) {
+	head1, tail1 := getHeadAndTail("")
+	if head1 != "" && tail1 != "" {
+		t.Fatalf("head1 and tail1 are supposed to be empty, but are: %s and %s", head1, tail1)
+	}
+	head2, tail2 := getHeadAndTail("/")
+	if head2 != "" && tail2 != "" {
+		t.Fatalf("head2 and tail2 are supposed to be empty, but are: %s and %s", head2, tail2)
+	}
+	head3, tail3 := getHeadAndTail("/whatever")
+	if head3 != "whatever" && tail3 != "" {
+		t.Fatalf("head3 and tail3 are supposed to be whatever and empty respectively, but are %s and %s", head3, tail3)
+	}
+	head4, tail4 := getHeadAndTail("/whatever/")
+	if head4 != "whatever" && tail4 != "" {
+		t.Fatalf("head4 and tail4 are supposed to be whatever and empty respectively, but are %s and %s", head4, tail4)
+	}
+	head5, tail5 := getHeadAndTail("/whatever/something")
+	if head5 != "whatever" && tail5 != "something" {
+		t.Fatalf("head5 and tail5 are supposed to be whatever and something, but are %s and %s", head5, tail5)
+	}
+}
+
 func TestExecutorGeneral(t *testing.T) {
 	statsHandlerBuilder := func(params map[string]string) http.Handler {
 		username := params["username"] //for now this is okay. In the future, the params should be auto passed through somehow
